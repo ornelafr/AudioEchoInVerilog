@@ -3,7 +3,7 @@
 This is a project done in Miami University's ECE 287 course
 ---
 # Project Description:
-
+---
 The goal of this project is to design a code that would produce an echo effect on the DE2-115 FPGA board. Our strategy revolved around obtaining audio from the line-in MIC port and saving it onto a memory file where we would then manipulate the data into producing an output effect that resembled an echo.
 
 # Background Information:
