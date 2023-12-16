@@ -121,5 +121,42 @@ module FFTVisualisator
 		.inData(fftInData),
 		.outData(fftOutData)
 	);
-	
+	/*
+	module Echo(input clk,
+	input rst,
+	input en,
+	input process_en,
+	input Play_en,
+	output reg rec_done,
+	output reg process_done,
+	output reg play_done,
+	input AUD_ADCDAT
+	);
+	*/
+	/*```diff*/
+	/*+*/// (Matthew and Fernando) Instantiating our module
+	/*+*/Echo DUT
+	/*+*/(
+	/*+*/AUD_BCLK,
+	/*+*/KEY[0],
+	/*+*/SW[3],
+	/*+*/SW[4],
+	/*+*/SW[5],
+	/*+*/seg7_1,
+	/*+*/seg7_2,
+	/*+*/seg7_3,
+	/*+*/AUD_ADCDAT,
+	/*+*/AUD_ADCDAT_Out
+	/*+*/);
+	 
+	 /*+*/// (Matthew and Fernando) If switch for playing echo is enabled, use our data, else use mic data
+/*+*/always@(*)
+	/*+*/if(SW[5] == 1'b1)
+		/*+*/AUD_ADCDAT_IN = AUD_ADCDAT_Out;
+	/*+*/else
+		/*+*/AUD_ADCDAT_IN = AUD_ADCDAT;
+/*```*/
+
+endmodule
+
 endmodule
