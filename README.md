@@ -1,30 +1,41 @@
-![alt tag](https://www.dropbox.com/s/kuagdh0ddndpmlt/photo-example.jpg?raw=1)
+# AudioEchoInVerilog
+---
+This is a project done in Miami University's ECE 287 course
+---
+# Project Description:
 
-# Description
+The goal of this project is to design a code that would produce an echo effect on the DE2-115 FPGA board. Our strategy revolved around obtaining audio from the line-in MIC port and saving it onto a memory file where we would then manipulate the data into producing an output effect that resembled an echo.
 
-In this project I have designed a system that shows the DSP capabilities of FPGA systems. The FPGA design consists of:<br />
-1) A finite-state machine for the audio codec configuration via I2C.<br />
-2) An I2S receiver for acquiring data from the audio codec.<br />
-3) A 6-order low-pass IIR filter to demonstrate filtering capabilities of FPGA.<br />
-4) A 4096-point FFT megacore from Altera to get the signal spectrum.<br />
-5) A VGA module with video RAM to display the spectrum.<br />
-All modules are written by myself except FFT megacore.<br />
-<br />
-The design is intended for the Terasic DE2-115 board with the Cyclone IV FPGA chip.<br />
-<br />
-KEY[0] - reset<br />
-SW[2:0] - background color<br />
-SW[17] - 1: filter off, 0: filter on<br />
-SW[16] - mic left/right channel<br />
-<br />
-VGA: VESA 1024x768@70 Hz<br />
-FFT range: 0 - 1/4 Fs<br />
-Fs: 48 828.125 Hz
+# Background Information:
+---
+This project requires an understanding of how audio is processed in the DE2-115 so research needs to be done on the pin layouts found in the DE2-115 User Manual as well as the audio chip that is used. The Wolfson MW8731 chip is responsible for the audio manipulation from the female ends of the headphone jacks located on the board. To initiate communication between the audio and the FPGA we require knowledge on I2C and SPI protocols which are found on the Wolfson MW8731 manual. This required reading the entire manual to understand the communication between the Parent (Master) and Child (Slave) element found in the Wolfson DataSheets. The following figures show how the Child (Slave) mode worked.
 
-# Block diagram
+![20231215_145006](https://github.com/ornelafr/AudioEchoInVerilog/assets/153780710/d30431dd-302e-4797-b359-819cb61a1ca8)
 
-![alt tag](https://www.dropbox.com/s/bg2g003zykzvpz0/BlockDiagram.png?raw=1)
+![20231215_145142](https://github.com/ornelafr/AudioEchoInVerilog/assets/153780710/bd79f143-1250-4004-9471-dd4565d71e12)
 
-# Example
+ The manual also contains the specific register addresses that allow the audio CODEC to communicate from the Parent to Child and manipulate the corresponding values. 
+ Here is an example given by the manual:
 
-[Watch the video of working](https://www.dropbox.com/s/856fmr8i4wgyl42/video-example.webm?raw=1)
+![20231215_150107](https://github.com/ornelafr/AudioEchoInVerilog/assets/153780710/f71ff972-ebd6-4ead-bed8-8b4b5ca84fe8)
+
+
+# Design:
+---
+The project utilizes a previous project, by Goshik92, that was found from Github that obtains audio input and converts it into a visual representation using the VGA. Since the Audio chip and the video chip share an I2C bus the audio and video chip will not function correctly so we chose to display the echo effect on the VGA first. We began by creating two memories, one records the data coming in from the mic port, and the other stores the echo effect. We chose to store our newly created module, Echo,  under the original top module called FFTVisualizer which instantiates it. We then added on to the FFTVisualizer module to change the input form the mic to the memory file that is processed in our Echo file. The Echo file is calibrated to work with the AUD_BCLK clock where it keeps the first 12 addresses and then repeats this first section for the next 12 addresses and then contains the original 12 addresses the same. This cycle is how we generated the repeating effect of the echo. After this processing we used the AUD_BCLK to time our data output onto the I2SReciever module which would then be sent to the FFTVisualizer to provide the visual output.
+
+# Results:
+---
+We did succeed in creating a memory that would store the data input from the mic port, creating a file within the provided code by Goshik92, and a repeating effect out of the visualizer. However, we were not successful in producing a successful verilog code for the Parent-to-Child interaction to produce the output necessary to check if the audio provided a goode echo effect. It was difficult to tell from the visualizer if our echo was successful so it would be necessary to create a working module to check. The output displayed the same shape instead of mimicking real life audio waves. This can be attributed to the FFT file that was a part of the module which used Fourier series transforms to manipulate the data into the VGA.
+
+# Conclusion:
+---
+It would have been optimal to have studied each section of the Wolfson manual which provided example scenarios that would have made it easier to organize the module with specific sample rates and output rates. Other things on the chip's data sheet were the specific codes for manipulating the decibel range, muting the output, changing the volume, ect. These options would allow for enhancement of the audio quality produced. A great starting point for producing higher audio quality would be by going over documentation that explained how audio echo is made such as in the Time Sequence Analysis in Geophysics book that was used in a Github code that also created an echo effect that was made by a previous student in the ECE287 class named Austyn Larkin. This book provided great examples on how to manipulate digital data into analog which would help in creating the echo effect that involves repeated signals and lowering the volume for a more natural sound effect.
+
+
+Goshik92, Fftv. (2018, June 22). Goshik92/FFTVISUALIZER: This project demonstrates DSP capabilities of Terasic DE2-115. GitHub. https://github.com/Goshik92/FFTVisualizer 
+
+
+Microelectronics, W. (2005, February). W WM8731 / WM8731L - cdn.sparkfun.com. CDN Sparkfun.com. https://cdn.sparkfun.com/datasheets/Dev/Arduino/Shields/WolfsonWM8731.pdf 
+
+Larkin, A. (2018). Reenforcements/VerilogDE2115AudioFilters: Student Project for using audio on the DE2-115 FPGA Development Board. GitHub. https://github.com/Reenforcements/VerilogDE2115AudioFilters 
