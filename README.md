@@ -24,8 +24,7 @@ This project requires an understanding of how audio is processed in the DE2-115 
 ---
 The project utilizes a previous project, by Goshik92, that was found from Github that obtains audio input and converts it into a visual representation using the VGA. Since the Audio chip and the video chip share an I2C bus the audio and video chip will not function correctly so we chose to display the echo effect on the VGA first. We began by creating two memories, one records the data coming in from the mic port, and the other stores the echo effect. We chose to store our newly created module, Echo,  under the original top module called FFTVisualizer which instantiates it. We then added on to the FFTVisualizer module to change the input form the mic to the memory file that is processed in our Echo file. The Echo file is calibrated to work with the AUD_BCLK clock where it keeps the first 12 addresses and then repeats this first section for the next 12 addresses and then contains the original 12 addresses the same. This cycle is how we generated the repeating effect of the echo. After this processing we used the AUD_BCLK to time our data output onto the I2SReciever module which would then be sent to the FFTVisualizer to provide the visual output.
 ![20231215_195304](https://github.com/ornelafr/AudioEchoInVerilog/assets/153780710/b0b9d42b-7699-451d-812a-984b2d95ff96)
-![Uploading 20231215_195348.jpg…]()
-
+![20231215_195348](https://github.com/ornelafr/AudioEchoInVerilog/assets/153780710/e7f8abb3-c43c-448f-8629-a6bdbe185716)
 
 # Results:
 ---
