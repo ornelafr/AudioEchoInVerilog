@@ -1,0 +1,198 @@
+module echo(input clk,
+	input rst,
+	input en,
+	input process_en,
+	input Play_en,
+	output reg rec_done,
+	output reg process_done,
+	output reg play_done,
+	input AUD_ADCDAT,
+	);
+
+	reg sampleRate;
+	reg write;
+	reg [14:0] addy_1;
+	reg [14:0] addy_2;
+	reg [255:0] AUD_Data_Write;
+	reg [255:0] AUD_Data_Fetch_1;
+	reg [255:0] AUD_Data_Fetch_2;
+	reg [255:0] AUD_Data_Fetch_3;
+	reg AUD_ADCDAT_IN;
+	reg write_1;
+	
+	reg [3:0] S;
+	reg [3:0] NS;
+	
+	reg [15:0]j;
+	reg [8:0]i;
+	
+	
+ClockDivider #(.DIVIDER(1024)) cd3(.reset(rst), .inClock(clk), .outClock(sampleRate));
+
+/*
+module AUD_Rec (
+	address,
+	clock,
+	data,
+	wren,
+	q);
+*/
+
+AUD_Rec DUT_1(addy_1, sampleRate, AUD_Data_Write, write, AUD_Data_Fetch_1);
+AUD_Rec DUT_2(addy_2, sampleRate, AUD_Data_Write, write, AUD_Data_Fetch_2);
+AUD_Rec DUT_3(addy_1, sampleRate, AUD_Data_Write, write_1, AUD_Data_Fetch_3);
+
+parameter Start = 4'd0;
+parameter Start_Rec = 4'd1;
+parameter i_Counter = 4'd2;
+parameter Addy_Counter = 4'd3;
+parameter Done_Rec = 4'd4;
+parameter Process = 4'd5;
+parameter Echo = 4'd6;
+parameter j_Counter = 4'd7;
+parameter Done_Process = 4'd8;
+parameter i_j_rst = 4'd9;
+parameter Start_Read = 4'd10;
+parameter i_Counter_2 = 4'd11;
+parameter Addy_Counter_2 = 4'd12;
+parameter Done_Play = 4'd13;
+
+always@(posedge clk or negedge rst)
+	if(rst == 1'b0)
+		S <= Start;
+	else
+		S <= NS;
+		
+always@(*)
+	case(S)
+	Start:
+		if(en == 1'b1)
+			NS = Start_Rec;
+		else
+			NS = Start;
+	Start_Rec:
+		NS = i_Counter;
+	i_Counter:
+		if(i < 255)
+			NS = Start_Rec;
+		else
+			NS = Addy_Counter;
+	Addy_Counter:
+		if(addy_1 < 32767)
+			NS = Start_Rec;
+		else
+			NS = Done_Rec;
+	Done_Rec:
+		if(process_en == 1'b1)
+			NS = Process;
+		else
+			NS = Done_Rec;
+	Process: 
+		NS = Echo;
+	Echo: 
+		NS = j_Counter;
+	j_Counter: 
+		if(j < 32767)
+			NS = Process;
+		else
+			NS = Done_Process;
+	Done_Process: 
+		if(Play_en == 1'b1)
+			NS = i_j_rst;
+		else
+			NS = Done_Process;
+	i_j_rst: 
+		NS = Start_Read;
+	Start_Read: 
+		NS = i_Counter_2;
+	i_Counter_2:
+		if(i < 255)
+			NS = Start_Read;
+		else
+			NS = Addy_Counter_2;
+	Addy_Counter_2:
+		if(addy_1 < 32767)
+			NS = Start_Read;
+		else
+			NS = Done_Play;
+	Done_Play:
+		NS = Done_Play;
+	endcase
+		
+always@(posedge clk or negedge rst)
+	if(rst == 1'b0)
+	begin
+		write <= 1'b1;
+		write_1 <= 1'b1;
+		addy_1 <= 15'd0;
+		addy_2 <= 15'd0;
+		i <= 9'd0;
+		j <= 15'd0;
+		rec_done <= 1'b0;
+		process_done <= 1'b0;
+		play_done <= 1'b0;
+	end
+	else
+		case(S)
+	Start:
+		begin
+			
+		end
+	Start_Rec:
+		begin
+			AUD_Data_Write[i] <= AUD_ADCDAT;
+		end
+	i_Counter:
+		begin
+			i <= i + 1;
+		end
+	Addy_Counter:
+		begin
+			addy_1 = addy_1 + 1;
+		end
+	Done_Rec:
+		begin
+			rec_done <= 1'b1;
+			j <= 2035;
+		end
+	Process: 
+		begin
+			addy_1 <= j;
+			addy_2 <= j - 2035;
+		end
+	Echo: 
+		begin
+			AUD_Data_Write <= AUD_Data_Fetch_1[i] | AUD_Data_Fetch_2[i];
+		end
+	j_Counter: 
+		begin
+			j <= j + 1;
+		end
+	Done_Process: 
+		begin
+			process_done <= 1'b1;
+		end
+	i_j_rst: 
+		begin
+			j <= 0;
+			i <= 0;
+		end
+	Start_Read: 
+		begin
+			AUD_ADCDAT_IN <= AUD_Data_Fetch_1[i];
+		end
+	i_Counter_2:
+		begin
+			i <= i + 1;
+		end
+	Addy_Counter_2:
+		begin
+			addy_1 <= addy_1 + 1;
+		end
+	Done_Play:
+		begin
+			play_done <= 1'b1;
+		end
+	endcase
+
+endmodule 
